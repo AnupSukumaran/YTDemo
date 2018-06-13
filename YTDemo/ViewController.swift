@@ -28,6 +28,8 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     
     var videosArray: Array<Dictionary<String, AnyObject>> = []
     
+    var selectedVideoIndex: Int!
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
@@ -127,6 +129,16 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             videosArray.removeAll(keepingCapacity: false)
             
             getVideosForChannelAtIndex(index: indexPath.row)
+        }else{
+            selectedVideoIndex = indexPath.row
+            performSegue(withIdentifier: "idSeguePlayer", sender: self)
+        }
+    }
+    
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        if segue.identifier == "idSeguePlayer" {
+            let playerVC = segue.destination as! PlayerViewController
+            playerVC.videoID = videosArray[selectedVideoIndex]["videoID"] as! String
         }
     }
     
@@ -152,8 +164,9 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             
         }
         
-        var urlString = "https://www.googleapis.com/youtube/v3/search?part=snippet&q=\(textField.text ?? "dd")&type=\(type)&key=\(apiKey)"
-        urlString = urlString.addingPercentEncoding(withAllowedCharacters: .illegalCharacters)!
+        let urlString = "https://www.googleapis.com/youtube/v3/search?part=snippet&q=\(textField.text ?? "dd")&type=\(type)&key=\(apiKey)"
+        //urlString = urlString.addingPercentEncoding(withAllowedCharacters: .)
+        print("URL123 = \(urlString)")
         
         let targetURL = URL(string: urlString)
         
@@ -210,6 +223,12 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         let session = URLSession(configuration: sessionConfig)
         
         let task = session.dataTask(with: request) { (data, response, error) in
+            guard error == nil else{
+                print("Error = \(String(describing: error?.localizedDescription))")
+                return}
+            guard let data = data else{
+                print("Data1234")
+                return}
             
             DispatchQueue.main.async {
                 completion(data,(response as! HTTPURLResponse).statusCode,error)
